@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}contact me
+{% endblock title %}
+
+{% block content %}
+
+<style>
+#humanInput {
+    width:80%;
+    text-align:center;
+}
+
+#main {
+
+    display:none;
+    width:80%;
+    margin:auto;
+    margin-top: 15rem;
+    text-align: center;
+}
+#info {
+    flex-grow:1;
+}
+</style>
+
+<div id="main"> 
+    <div id="resume">
+        <p>check out my resume <a href="{% static 'resume.pdf' %}">here</a></p>
+    </div>
+    <div id="cv">
+        <p>check out my cv <a href="{% static 'cv.pdf' %}">here</a></p>
+    </div>
+    <div id="info">
+        <p>feel free to contact me at my email <a id="emailReplace" href="mailto:placeholder@fake.com">placeholder@fake.com</a></p>
+    </div>
+</div>
+
+<div class="modal fade" id="humanModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="">are you human?</h5>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center;">
+                    <p>anti-bot measure</p>
+                    <p>please type a sensible response to this question below</p>
+                    <input id='humanInput' placeholder="something like 'yes'">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="humanButton" class="btn btn-light">submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+$().ready(function () {
+    csrf = $('{% csrf_token %}').val();
+    $('#humanModal').modal('show');
+});
+
+$('#humanButton').click(function(){
+    $.ajax({
+        type: "POST",
+        url: "{% url 'contact_check' %}",
+        data: {msg: $('#humanInput').val(), csrfmiddlewaretoken: csrf},
+        success: function (data){
+            $('#emailReplace').html(data['email']);
+            $('#emailReplace').attr({'href': `mailto:${data['email']}`});
+            $('#main').show();
+            $('#humanModal').modal('hide');
+
+        },
+        error: function() {
+            bootstrap.Modal.getInstance('.modal')._triggerBackdropTransition(); // make the box shake - bootstrap logs suck
+        }
+    });
+
+})
+
+
+
+</script>
+
+{% endblock content %}

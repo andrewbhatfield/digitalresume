@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+{% block title %}Elliptic Curve Cryptography{% endblock title %}
+{% block content %}
+<style>
+.nav-controls{
+    width:100%;
+}
+.card{
+    width:80%;
+    margin:auto;
+    height:75%;
+    margin-top:50px;
+    background-color:aliceblue;
+    color:var(--bs-body-color);
+}
+.next{
+    margin-top:18%;
+    margin-right:65px;
+    float:right;
+}
+
+.prev{
+    margin-top:18%;
+    margin-left:65px;
+    float:left;
+}
+.card-title{
+    text-align:center;
+    font-size:2rem;
+}
+.encode_results{
+    height:0px; /* for some reason this fixes weird overflow?  */
+}
+.lblock{
+    display:inline;
+    width:60%;
+    height:100%;
+    overflow:overlay;
+    position:auto;
+    float:left;
+    margin-left:17px;
+}
+.card-content{
+    height:100%;
+}
+.rblock{
+    width:36%;
+    height:100%;
+    overflow:auto;
+    position:auto;
+    float:right;
+    margin-top:0px;
+}
+.graph{
+    
+    width:99%;
+    height:90%;
+    border: 1px solid lightgrey;
+    margin:2px;
+}
+.vsep{
+    display:inline-block;
+    width:1px;
+    height:70%;
+    margin-top:60px;
+    border-left:1px solid lightgrey;
+    margin-left:22px;
+}
+.text{
+    padding:5px;
+    padding-top:0px;
+    text-align:justify;
+    margin-top:0px;
+    margin-right:17px;
+}
+.caption{
+    margin-top:19px;
+    text-align:center;
+}
+
+.btn-light{
+    background-color: aliceblue;
+}
+</style>
+<!-- check https://www.ams.org/journals/mcom/1987-48-177/S0025-5718-1987-0866109-5/S0025-5718-1987-0866109-5.pdf for more information
+- -->
+
+
+<div class='rolodex' data-bs-theme="light">
+    <div class='nav-controls'>
+        <div class='next'>
+            <div class='next-button btn btn-light btn-lg'>
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </div>
+        </div>
+        <div class='prev'>
+            <div class='prev-button btn btn-light btn-lg disabled'>
+                <span class="material-symbols-outlined">arrow_back</span>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card1'>
+        <div class='card-title'>What is Elliptic Curve Cryptography?</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div class='graph' id='jxgbox1'> </div>
+                <div class='caption'>The curve pictured above is defined by $y^2 = x^3 - x + 1$.</div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>This is an interactive implementation of the <b>Massey-Omura cryptosystem</b>. For a brief introduction, see the next slide.
+                <br>
+                <br>It is sometimes the case in mathematics that operations are easier to perform than to undo (there is a reason you learn how to compute powers before logarithms!).
+                One such example is calculating multiples of points on elliptic curves according to the group law - more directly, given a point $P$, it is significantly easier
+                to compute multiples $kP$ than it is to figure out $k$ such that $kP$ is equal to a given point $Q$ (this is known as the <b>'elliptic curve discrete logarithm problem'</b>). 
+                The goal of a cryptosystem is to exploit the 'one-way' nature of operations like the elliptic curve group law to allow secure communication that can be quickly encrypted 
+                and decrypted by the sender and recipient, but is incredibly resilient to third parties.
+                <br>
+                <br>ECC (elliptic curve cryptography) is incredibly common - in fact, your browser and computer are probably using it right now. The most common use case 
+                is for TLS (transport layer security), the protocol that secures most of your important web traffic. Therefore, your ability to access your bank account online securely rests on 
+                cryptography like ECC and the math that powers it.
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <div class='card' id='card2' style="display:none;">
+        <div class='card-title'>Introduction to Elliptic Curve Cryptography</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div class='graph' id='jxgbox2'> </div>
+                <div class='caption'>Plotted is the curve $y^2 = x^3 - x + 1$ over the real numbers as well as its solutions over $\mathbb{F}_{29}$.</div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Let $p > 3$ be a prime and let $\mathbb{F}_p = \mathbb{Z}/\mathbb{Z}p$ be the integers modulo $p$, i.e. the set of equivalence classes obtained by sorting 
+                each integer based on its remainder when divided by $p$. It turns out that this set of classes is incredibly well-behaved - we can add, 
+                subtract, multiply, and (for nonzero classes) divide equivalence classes of integers modulo $p$, just like we would with the real numbers. We call 
+                this set the <b>finite (or Galois) field of order $p$</b>. 
+
+                <br>
+                <br>An <b>elliptic curve over a field $\mathbb{F}$</b> is a curve of the form $$y^2 = x^3 + ax + b$$ for some $a,b$ in $\mathbb{F}$ satisfying
+                $4a^3 + 27b^2 \ne 0$. <br><br>While these curves have infinitely many solutions in the real numbers, they contain only finitely many points over the finite field $\mathbb{F}_p$. 
+                For example, over $\mathbb{F}_{29}$, the elliptic curve $$y^2 = x^3 - x + 1$$ from the previous slide has 36 points on it (see diagram). Although 
+                some of the points may not appear to sit on the curve, they are solutions over $\mathbb{F}_p$ nonetheless. Note that for every solution $(x,y)$, the reflection over the $x$-axis 
+                $(x,-y)$ is also a solution.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card3' style="display:none;">
+        <div class='card-title'>Elliptic Curve Group Law</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div class='graph' id='jxgbox3'> </div>
+                <div class='caption'>On the curve $y^2 = x^3 - x + 1$ over the real numbers, $P + Q = R$.</div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>It turns out that by adding an extra point (which we will denote by $\mathcal{O}$, the <b>'point at infinity'</b>), we can define an operation $\oplus$ on points 
+                of the elliptic curve. Over the real numbers, this operation has a nice geometric interpretation. For (most) points $P,Q$, we define their addition 
+                $P \oplus Q$ to be the opposite of the unique point on the curve collinear with $P$ and $Q$ (see diagram). This works except for a few cases, 
+                where we can shift the definition slightly while keeping the same spirit. 
+
+                <br><br>For any point $P$, define $P \oplus \mathcal{O} = \mathcal{O}$ and $\mathcal{O} \oplus P = \mathcal{O}$. 
+                To calculate $2P = P \oplus P$ (or in general, $nP = P \oplus \cdots \oplus P$), we instead use the tangent line at the point and take the opposite of the intersection of the tangent line with the curve. If there is no intersection,
+                then $P$ is an inflection point and $P \oplus P = \mathcal{O}$. Finally, if $Q$ is the reflection of $P$ over the $x$-axis, we have $P \oplus Q = \mathcal{O}$. Note that 
+                in any case, $P \oplus Q = Q \oplus P$. 
+
+                <br><br>With this operation, we can add, subtract, and calculate multiples of any point on the elliptic curve, so we say the points of the elliptic curve 
+                along with $\mathcal{O}$ form an <b>abelian group</b> under the operation $\oplus$. We can do the same calculations when the curve is over $\mathbb{F}_p$, just without 
+                the nice geometric interpretation.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card4' style="display:none;">
+        <div class='card-title'>Embedding a Plaintext</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Let's say that the ECC we are using is $y^2 = x^3 - x + 1$ over $\mathbb{F}_p$ with $p = 408616349$, and we have decided that $r = 1000$ is appropriate.  
+                </div>
+                <form id='encode' style='padding-top:10px;'>
+                    <div class="row" style='margin-right:0px;'>
+                        <div class="col">
+                            <input type="text" class="form-control encode_msg" id='encode_msg' name='encode_msg' value="Sample Message">
+                        </div>
+                    </div>
+                    <div style='text-align:center;padding-top:15px;'>
+                        <button id='encode_submit' class="btn btn-primary encode_submit">Submit</button>
+                    </div>
+                </form>
+                <div class='encode_results'>
+                    ASCII converted string: <span id='encode_string'></span>
+                    <br>
+                    <br>ASCII blocks: <span id='encode_blocks'></span>
+                    <br>
+                    <br>Converted points: <span class='encode_points'></span>
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Now that the elliptic curve group law is clear, how do we use this for encryption? We need to develop a method to embed messages 
+                as points on the elliptic curve. There are several ways to do this - here is a very simple probabilistic method that uses ASCII encoding to split our message into blocks.
+                <br>
+                <br><b>1)</b> Decide on an acceptable range $r$ to search for matching points (1000 is probably good enough). 
+                <br><b>2)</b> Convert the message to ASCII and break into integer blocks $m_i$ such that $m_i < \frac{p}{r}- 1$. Our simple ASCII encoding will use blocks of length 3. 
+                <br><b>3)</b> For each block, find a point $P_i$ on the elliptic curve with $x$ coordinate between is between $(r*m_i)$ and $(r*(m_i + 1))$. This can be done by trying the $r$ distinct 
+                $x$ coordinates in this range until finding one that works. Note this may fail with probability approximately $2^{-r}$, so it is important to not pick $r$ too small.
+                <br>
+                <br>Use the interactive form on the left to see how this method works for a given message.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card5' style="display:none;">
+        <div class='card-title'>Key Selection</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Recall that the elliptic curve we are using is defined by $y^2 = x^3 - x + 1$ over the field $\mathbb{F}_p$ with $p = 408616349$. You can see the randomly generated
+                    keypairs below. 
+                </div>
+                <form id='encode' style='padding-top:10px;'>
+                    <div class="row" style='margin-right:0px;'>
+                        <div class="col">
+                            <input style="display:none;" type="text" class="form-control copies_msg" name='encode_msg' value="Sample Message">
+                        </div>
+                    </div>
+                    <div style='text-align:center;padding-top:15px;'>
+                        <button id='encode_submit' class="btn btn-primary encode_submit">Generate New Keypairs</button>
+                    </div>
+                </form>
+                <div class='encode_results'>
+                    <br>Sender keypair (c, c'): (<span class='cpub'></span>, <span class='cpri'></span>)
+                    <br>
+                    <br>Sender keypair (d, d'): (<span class='dpub'></span>, <span class='dpri'></span>)
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>We have now embedded our plaintext message as points $P_i$ on the elliptic curve. Before we can encrypt and send our message, 
+                    we need both the sender and the receiver to select encryption and decryption keys using the process outlined below. 
+                    <br>
+                    <br><b>1)</b> Compute the number of points on the elliptic curve $E$. In this case, we have $N = 408594286$. 
+                    <br><b>2)</b> To obtain an encryption key, select a random integer $c$ between $0$ and $N$ that is coprime to $N$. 
+                    <br><b>3)</b> To compute the associated decryption key $c'$, compute the inverse of $c$ modulo $N$. 
+                    <br>
+                    <br>We will denote the sender's encryption and decryption keys as $c$ and $c'$ respectively, and the receiver's keys as $d$ and $d'$. 
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card6' style="display:none;">
+        <div class='card-title'>Encrypting the Message</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Recall the encryption and decryption keys of the sender and receiver. 
+                </div>
+                <div class='encode_results'>
+                    <br>Sender keypair (c, c'): (<span class='cpub'></span>, <span class='cpri'></span>)
+                    <br>
+                    <br>Sender keypair (d, d'): (<span class='dpub'></span>, <span class='dpri'></span>)
+                    <br>
+                    <br>$cP_i:$ <span class='step1_points'></span>
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Now that both parties have created their encryption and decryption keys, we can proceed to encrypt following the process below.
+                    <br>
+                    <br><b>1)</b> The sender uses the elliptic curve group law to compute and send the points $cP_i$, where $c$ is their encryption key and $P_i$ is an encoded point corresponding to an ASCII character. 
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card7' style="display:none;">
+        <div class='card-title'>Encrypting the Message</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Recall the encryption and decryption keys of the sender and receiver. 
+                </div>
+                <div class='encode_results'>
+                    <br>Sender keypair (c, c'): (<span class='cpub'></span>, <span class='cpri'></span>)
+                    <br>
+                    <br>Sender keypair (d, d'): (<span class='dpub'></span>, <span class='dpri'></span>)
+                    <br>
+                    <br>$cP_i:$ <span class='step1_points'></span>
+                    <br>
+                    <br>$dcP_i:$ <span class='step2_points'></span>
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Now that both parties have created their encryption and decryption keys, we can proceed to encrypt following the process below.
+                    <br>
+                    <br><b>1)</b> The sender uses the elliptic curve group law to compute and send the points $cP_i$, where $c$ is their encryption key and $P_i$ is an encoded point corresponding to an ASCII character. 
+                    <br><b>2)</b> The receiver computes and sends back the points $d(cP_i)$. 
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card8' style="display:none;">
+        <div class='card-title'>Encrypting the Message</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Recall the encryption and decryption keys of the sender and receiver. 
+                </div>
+                <div class='encode_results'>
+                    <br>Sender keypair (c, c'): (<span class='cpub'></span>, <span class='cpri'></span>)
+                    <br>
+                    <br>Sender keypair (d, d'): (<span class='dpub'></span>, <span class='dpri'></span>)
+                    <br>
+                    <br>$cP_i:$ <span class='step1_points'></span>
+                    <br>
+                    <br>$dcP_i:$ <span class='step2_points'></span>
+                    <br>
+                    <br>$dP_i:$ <span class='step3_points'></span>
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Now that both parties have created their encryption and decryption keys, we can proceed to encrypt following the process below.
+                    <br>
+                    <br><b>1)</b> The sender uses the elliptic curve group law to compute and send the points $cP_i$, where $c$ is their encryption key and $P_i$ is an encoded point corresponding to an ASCII character. 
+                    <br><b>2)</b> The receiver computes and sends back the points $d(cP_i)$. 
+                    <br><b>3)</b> The sender computes and sends the points $c'dcP_i = dP_i$. 
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card9' style="display:none;">
+        <div class='card-title'>Encrypting the Message</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Recall the encryption and decryption keys of the sender and receiver. 
+                </div>
+                <div class='encode_results'>
+                    <br>Sender keypair (c, c'): (<span class='cpub'></span>, <span class='cpri'></span>)
+                    <br>
+                    <br>Sender keypair (d, d'): (<span class='dpub'></span>, <span class='dpri'></span>)
+                    <br>
+                    <br>$cP_i:$ <span class='step1_points'></span>
+                    <br>
+                    <br>$dcP_i:$ <span class='step2_points'></span>
+                    <br>
+                    <br>$dP_i:$ <span class='step3_points'></span>
+                    <br>
+                    <br>$P_i:$ <span class='step4_points'></span>
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Now that both parties have created their encryption and decryption keys, we can proceed to encrypt following the process below.
+                    <br>
+                    <br><b>1)</b> The sender uses the elliptic curve group law to compute and send the points $cP_i$, where $c$ is their encryption key and $P_i$ is an encoded point corresponding to an ASCII character. 
+                    <br><b>2)</b> The receiver computes and sends back the points $d(cP_i)$. 
+                    <br><b>3)</b> The sender computes and sends the points $c'dcP_i = dP_i$. 
+                    <br><b>4)</b> The receiver computes $d'dP_i = P_i$. 
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class='card' id='card10' style="display:none;">
+        <div class='card-title'>Encrypting the Message</div>
+        <div class='card-content'>
+            <div class='lblock'>
+                <div>
+                    Recall the encryption and decryption keys of the sender and receiver. 
+                </div>
+                <div class='encode_results'>
+                    <br>Sender keypair (c, c'): (<span class='cpub'></span>, <span class='cpri'></span>)
+                    <br>
+                    <br>Sender keypair (d, d'): (<span class='dpub'></span>, <span class='dpri'></span>)
+                    <br>
+                    <br>$cP_i:$ <span class='step1_points'></span>
+                    <br>
+                    <br>$dcP_i:$ <span class='step2_points'></span>
+                    <br>
+                    <br>$dP_i:$ <span class='step3_points'></span>
+                    <br>
+                    <br>$P_i:$ <span class='step4_points'></span>
+                    <br>
+                    <br>Decoded message: <span class='decoded'></span>
+                </div>
+            </div>
+            <div class='vsep'></div>
+            <div class='rblock'>
+                <div class='text'>Now that both parties have created their encryption and decryption keys, we can proceed to encrypt following the process below.
+                    <br>
+                    <br><b>1)</b> The sender uses the elliptic curve group law to compute and send the points $cP_i$, where $c$ is their encryption key and $P_i$ is an encoded point corresponding to an ASCII character. 
+                    <br><b>2)</b> The receiver computes and sends back the points $d(cP_i)$. 
+                    <br><b>3)</b> The sender computes and sends the points $c'dcP_i = dP_i$. 
+                    <br><b>4)</b> The receiver computes $d'dP_i = P_i$. 
+                    <br><b>5)</b> The receiver decodes the points $P_i$ (in this case, converting them back into ASCII characters). 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+b1 = JXG.JSXGraph.initBoard('jxgbox1', {boundingbox: [-28,28,28,-28], axis:true, showCopyright:false, showNavigation:false});
+b1.create('functiongraph', [function(x) {
+    return Math.sqrt(x * x * x - x + 1);
+}], {strokeWidth: 3, strokeColor: 'black'});
+b1.create('functiongraph', [function(x) {
+    return -Math.sqrt(x * x * x - x + 1);
+}], {strokeWidth: 3, strokeColor: 'black'});
+
+b2 = JXG.JSXGraph.initBoard('jxgbox2', {boundingbox: [-5,15,30,-15], axis:true, showCopyright:false, showNavigation:false});
+pts = [[-1, -1], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 1], [2, -6], [2, 6], [3, -5], [3, 5], [5, -11], [5, 11], [9, -5], [9, 5], [10, -11], [10, 11], [11, -4], [11, 4], [12, -8], [12, 8], [14, -11], [14, 11], [17, -5], [17, 5], [20, -8], [20, 8], [22, -10], [22, 10], [23, -9], [23, 9], [25, -12], [25, 12], [26, -8], [26, 8], [27, -13], [27, 13]];
+
+b2.create('functiongraph', [function(x) {
+    return Math.sqrt(x * x * x - x + 1);
+}], {strokeWidth: 3, strokeColor: 'black'});
+b2.create('functiongraph', [function(x) {
+    return -Math.sqrt(x * x * x - x + 1);
+}], {strokeWidth: 3, strokeColor: 'black'});
+
+i = 1
+for (pt of pts){
+    b2.create('point', pt, {name:i}).setAttribute({fixed:true});
+    i+=1
+}
+
+b3 = JXG.JSXGraph.initBoard('jxgbox3', {boundingbox: [-5,15,30,-15], axis:true, showCopyright:false, showNavigation:false});
+b3.create('functiongraph', [function(x) {
+    return Math.sqrt(x * x * x - x + 1);
+}], {strokeWidth: 3, strokeColor: 'black'});
+b3.create('functiongraph', [function(x) {
+    return -Math.sqrt(x * x * x - x + 1);
+}], {strokeWidth: 3, strokeColor: 'black'});
+b3.create('point', [-1.32471795, 0], {name:'P'}).setAttribute({fixed:true});
+b3.create('point', [0, 1], {name:'Q'}).setAttribute({fixed:true});
+b3.create('point', [1.894558, 2.4301597], {name:'-R'}).setAttribute({fixed:true});
+b3.create('point', [1.894558, -2.4301597], {name:'R'}).setAttribute({fixed:true});
+b3.create('line', ['P','Q']);
+
+
+cur_card = 1;
+max_cards = 10;
+
+
+function updateCard(){
+    $('.card').hide();
+    $(`#card${cur_card}`).show();
+    if (cur_card > 1){
+        $('.prev-button').removeClass('disabled');
+    }
+    if (cur_card < 2){
+        $('.prev-button').addClass('disabled');
+    }
+    if (cur_card < max_cards){
+        $('.next-button').removeClass('disabled');
+    }
+    if (cur_card == max_cards){
+        $('.next-button').addClass('disabled');
+    }
+}
+
+$('.next-button').click(function(){
+    if (!$(this).hasClass('disabled')){
+        cur_card += 1;
+        updateCard();
+    }
+});
+$('.prev-button').click(function(){
+    if (!$(this).hasClass('disabled')){
+        cur_card -= 1;
+        updateCard();
+    }
+});
+
+
+function encodeAJAX(){
+    $.ajax({
+            type: "POST",
+            url: "{% url 'ecc_encode' %}",
+            data: {msg: $('#encode_msg').val(), csrfmiddlewaretoken: csrf},
+    }).done(function (data) {
+        cdata = data;
+        $('#encode_string').html(data['s']);
+        $('#encode_blocks').html('['+data['bs'].join(', ') + ']');
+        pts = [];
+        data['enc'].forEach((pt) => {
+            pts.push(`(${pt[0]}, ${pt[1]})`);
+        });
+        $('.encode_points').html(pts.join(', '));
+        $('.encode_results').show();
+        $('.cpub').html(data['cpub']);
+        $('.cpri').html(data['cpri']);
+        $('.dpub').html(data['dpub']);
+        $('.dpri').html(data['dpri']);
+        // yuck probably should just send back 1 array for these and do something nicer
+        step1_points = [];
+        data['step1_points'].forEach((pt) => {
+            step1_points.push(`(${pt[0]}, ${pt[1]})`);
+        });
+        $('.step1_points').html(step1_points.join(', '));
+        
+        step2_points = [];
+        data['step2_points'].forEach((pt) => {
+            step2_points.push(`(${pt[0]}, ${pt[1]})`);
+        });
+        $('.step2_points').html(step2_points.join(', '));
+
+        step3_points = [];
+        data['step3_points'].forEach((pt) => {
+            step3_points.push(`(${pt[0]}, ${pt[1]})`);
+        });
+        $('.step3_points').html(step3_points.join(', '));
+
+        step4_points = [];
+        data['step4_points'].forEach((pt) => {
+            step4_points.push(`(${pt[0]}, ${pt[1]})`);
+        });
+        $('.step4_points').html(step4_points.join(', '));
+        $('.decoded').html(data['decoded']);
+    });
+}
+
+
+$(document).ready(function () {
+    updateCard();
+    csrf = $('{% csrf_token %}').val();
+    encodeAJAX();
+
+    $(".encode_submit").on('click', function (e) {
+        $('.copies_msg').val($('#encode_msg').val());
+        e.preventDefault();
+        encodeAJAX();
+    });
+});
+
+
+
+</script>
+
+
+{% endblock content %}

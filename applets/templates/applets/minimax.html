@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load minimax_tags %}
+{% block title %}Minimax{% endblock title %}
+{% block content %}
+
+<style>
+.container{
+    text-align:center;
+}
+.ttt{
+    margin-left:auto;
+    margin-right:auto;
+    margin-top:50px;
+}
+.tttsquare{
+    border:3px solid #dee2e6;
+    width:200px;
+    height:200px;
+    text-align:center;
+    font-weight:bold;
+    font-size:50px;
+}
+.tttempty{
+    cursor:pointer;
+}
+.newgame{
+    margin-top:15px;
+}
+#intro {
+    margin-top:3rem;
+    margin-bottom:3rem;
+}
+
+</style>
+
+<div id="intro">
+    <div style="text-align: center;">
+        <p>a quick implementation of the minimax algorithm for 2 player games (here, tic-tac-toe)
+        <br>picks moves that minimizes potential score for player, but maximizes potential score for bot
+        <br>as a result, the bot will draw at worst
+        </p>
+    </div>
+</div>
+
+
+
+<div class='container'>
+    <table class='ttt'>
+    {% for i in '012'|make_list %}
+        <tr class='tttrow'>
+        {% for j in '012'|make_list %}
+            <td class='tttsquare tttempty' data-sqid='{{ i|two_d_to_one_d:j }}'></td>
+        {% endfor %}
+        </tr>
+    {% endfor %}
+    </table>
+    <div class='results'></div>
+    <div class='stats'></div>
+    <div class='button'>
+        <a class='btn btn-light newgame'>New Game</a>
+    </div>
+</div>
+
+<script>
+boardState = ['', '', '', '', '', '', '', '', ''];
+current = '';
+csrf = $('{% csrf_token %}').val();
+$('.tttsquare').click(function(){
+    if (boardState[$(this).attr('data-sqid')] == ''){
+        if (current !== 'botwin'){
+            index = $(this).attr('data-sqid');
+            boardState[index] = 'x';
+            $(this).html('x');
+            $.ajax({
+                type: "POST",
+                url: "{% url 'minimax_calculate' %}",
+                data: {'board': boardState, 'csrfmiddlewaretoken': csrf},
+                success: function(data){
+                    console.log(data);
+                    if (data['result'] !== 'Game is in progress.'){
+                        if (data['result'] === 'Bot has won.'){
+                            current = 'botwin';
+                            boardState[data['move']] = 'o';
+                            $(`[data-sqid=${data['move']}]`).html('o');
+                        }
+                        $('.results').html(data['result']);
+                        $('.stats').html('');
+                    } else {
+                        boardState[data['move']] = 'o';
+                        $(`[data-sqid=${data['move']}]`).html('o');
+                        $('.stats').html(data['stats']);
+                    }
+                }
+            });
+        }
+    } 
+});
+
+$('.newgame').click(function(){
+    boardState = ['', '', '', '', '', '', '', '', ''];
+    $('.tttsquare').each(function(){
+        $(this).html('');
+    });
+    $('.stats').html('');
+    $('.results').html('');
+    current = '';
+})
+
+</script>
+{% endblock content %}

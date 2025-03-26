@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% block title %}Mazes{% endblock title %}
+{% block content %}
+<style>
+    #intro {
+        margin-top:3rem;
+        margin-bottom:3rem;
+    }
+    #mainFlex{
+        display:flex;
+        width:80%;
+        margin:auto;
+        justify-content:center;
+
+    }
+    #mazePanel {
+        width: 20rem;  
+        height: 20rem; 
+        margin: 0 auto;
+        align-self: center;
+    }
+    #mazeTable{
+        margin:auto;
+        width: 100%;
+        height: 100%;
+    }
+    #controlPanel, #solverPanel {
+        flex: 1; 
+    }
+    #controlPanel {
+        display:block;
+        width:25rem;
+    }
+    #controlAlign {
+        margin-left:auto;
+    }
+    #solverMenu {
+        display:inline-flex;
+        position:relative;
+        align-items:center;
+        width:10rem;
+    }
+    #solverMenu span {
+        position:absolute;
+    }
+    #solverLeft {
+        left:0;
+    }
+    #solverRight {
+        right:0;
+    }
+    #solverSelect {
+        text-align:center;
+        margin:auto;
+    }
+    .cellPassage{
+        background-color: #dee2e6;
+    }
+    .cellWall{
+        background-color: black;
+    }   
+    .cellVisited{
+        background-color:lightskyblue;
+    } 
+    .cellPath{
+        background-color: lightgreen;
+    }
+    .cellCurrent{
+        background-color:lightcoral;
+    }
+    .mazeControl {
+        padding: .5rem;
+        
+    }
+    #controlButtons{
+        padding:.5rem;
+        padding-top: 0;
+    }
+    .mazeControl:hover, .solverControl:hover {
+        cursor:pointer;
+    }
+
+    #solverSummary{
+        margin:auto 5rem;
+    }
+</style>
+
+
+
+<div id="intro">
+    <div style="text-align: center;">
+        <p>some implementations of maze solvers
+        <br>mazes are generated with prim's algorithm to create a minimal spanning tree (i.e. every passage is connected to every other passage through 'exactly' one path)
+        <br>all mazes are solved from the top left to the bottom right
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <div id="mainFlex">
+        <div id="controlPanel">
+            <div id="controlAlign">
+                <div id="controlButtons">
+                    <span class="material-symbols-outlined mazeControl" onclick="curFrame=0;clearMaze();">restart_alt</span>
+                    <span class="material-symbols-outlined mazeControl" onclick="paused=true;">pause</span>
+                    <span class="material-symbols-outlined mazeControl" onclick="runAnimation(speed=50);">play_arrow</span>
+                    <span class="material-symbols-outlined mazeControl" onclick="runAnimation(speed=25);">fast_forward</span>
+                </div>
+                <div style="padding-top:3rem;">
+                    <p>selected solver:</p>
+                    <div id="solverMenu">
+                        <span class="material-symbols-outlined solverControl" id="solverLeft" onclick="solverIndex-=1;updateSolver();">chevron_left</span>
+                        <p id="solverSelect">dfs</p>
+                        <span class="material-symbols-outlined solverControl" id="solverRight" onclick="solverIndex+=1;updateSolver();">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="mazePanel" style="text-align: center;">
+            <table id="mazeTable"></table>
+            <a class="btn btn-light" id='genMaze' onclick='genMaze();' style="margin-top:1rem;">get a new maze</a>
+        </div>
+        <div id="solverPanel">
+            <h5 id="solverName">depth-first search</h5>
+            <p id="solverSummary">depth-first search uses a stack to continue searching from the longest known path. while it doesn't matter in this case (as all mazes have exactly one solution), dfs is not in general guaranteed to find a minimal length solution.</p>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    csrf = '';
+    solvers = [
+        {name: 'depth-first search', internal: 'dfs', summary: "depth-first search uses a stack to continue searching from the longest known path. while it doesn't matter in this case (as all mazes have exactly one solution), dfs is not in general guaranteed to find a minimal length solution."}, 
+        {name: 'breadth-first search', internal: 'bfs', summary: "breadth-first search uses a queue to search all length 1 paths, then length 2 paths, etc., until the solution has been found. bfs is always guaranteed to find a minimal-length solution."},  
+        {name: 'A*', internal: 'astar', summary: "A* is a 'best-first search' algorithm that uses a heuristic (in this case, the taxicab distance to the bottom-right corner) to 'score' neighbors of the current cell, and then traverses based on paths with the lowest expected score. A* is also guaranteed to find a minimal solution."}, 
+        {name: 'right hand rule', internal: 'righthand', summary: "the right-hand rule is the most naive maze-solving algorithm, and simply tries to move forward while keeping its right hand on the wall until it has solved the maze."}
+    ];
+    solverIndex = 0;
+    solver = solvers[solverIndex];
+
+    maze = []; 
+    frames = [];
+    
+    paused = false;
+    curFrame = 0;
+
+
+
+    $().ready(function (){
+        csrf = $('{% csrf_token %}').val();
+        genMaze();
+    });
+
+    function updateSolver(){
+        solver = solvers[(((solverIndex % solvers.length) + solvers.length) % solvers.length)]; // for some reason -1 % 4 = -1? makes no sense
+
+        $('#solverSelect').html(solver['internal']);
+        $('#solverName').html(solver['name']);
+        $('#solverSummary').html(solver['summary']);
+        paused = true;
+        curFrame = 0;
+        clearMaze();
+        getSolutionFrames();
+    }
+
+
+    function genMaze() {
+        paused = true;
+        $('#mazeTable').html('');
+        $.ajax({
+            type: "GET",
+            url: "{% url 'maze_generate' %}",
+            data: {'csrfmiddlewaretoken': csrf},
+            success: function (data){
+                maze = data['maze'];
+                padded = data['padded'];
+                genHtml = '';
+                padded.forEach(row => {
+                    genHtml += '<tr>'
+                    row.forEach(cell => {
+                        cl = '';
+                        switch (cell) {
+                            case 1:
+                                cl = 'cellPassage';
+                                break;
+                            default: 
+                                cl = 'cellWall';
+                        }
+
+                        genHtml += `<td class="${cl}"></td>`;
+                    });
+                    genHtml += '</tr>';
+                });
+                $('#mazeTable').append(genHtml);
+                getSolutionFrames();
+            }
+        });
+    }
+
+    function getSolutionFrames () {
+        curFrame = 0;
+        $.ajax({
+            type: "POST",
+            contentType: 'application/json',
+            url: "{% url 'maze_solve' %}",
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrf,
+            },
+            data: JSON.stringify({'maze': maze, 'method': solver['internal']}),
+            success: function (data){
+                frames = data['frames'];
+            }
+        });
+    }
+
+    function clearMaze(){
+        $('#mazeTable td').removeClass(["cellCurrent", "cellVisited", "cellPath"]);
+    }
+
+    function advanceFrame(update=true) {
+        frame = frames[curFrame];
+        clearMaze();
+        frame.forEach(params => {
+            cell = $('#mazeTable tr:eq(' + (+params[0] + +1) + ') td:eq(' + (+params[1] + +1) + ')'); // get cell by index, add 1 since displayed version is padded and internal isnt
+            if (params[2] === .25){
+                cell.addClass('cellVisited');
+            } else if (params[2] === .5){
+                cell.addClass('cellPath');
+            } else {
+                cell.addClass('cellCurrent');
+            }
+        });
+        if (update){
+            curFrame += 1;
+        }
+    }
+
+
+
+    const wait = (ms) => 
+        new Promise(resolve => 
+            setTimeout(() => resolve(true), ms)
+        );
+
+    async function runAnimation(speed=50){
+        paused = false;
+        while (curFrame < frames.length){
+            if (paused === false){
+                advanceFrame();
+                await wait(speed);
+            } else {
+                return;
+            }
+        } 
+        paused = true;
+    }
+
+
+</script>
+
+{% endblock content %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}writeups
+{% endblock title %}
+
+{% block content %}
+
+<style>
+    #intro {
+        margin-top:3rem;
+        margin-bottom:3rem;
+    }
+    .writeup {
+        width:80%;
+        margin:auto;
+        border: 1px solid #dee2e6;
+        border-radius:5px;
+    }
+    .writeup-header{
+        text-align: center;
+    }
+    .writeup-summary{
+        margin:5px;
+    }
+</style>
+
+<div id="intro">
+    <div style="text-align: center;">
+        <p>these are short summaries of papers i've coauthored/maybe notes on topics i'm interested in if i can get them formatted</p>
+    </div>
+</div>
+
+
+<div class="writeups">
+    {% for writeup in writeups %}
+    <div class="writeup">
+        <div class="writeup-header">{{ writeup.name }}<br><a href='{{ writeup.link }}'>link</a></div>
+        <br>
+        <div class="writeup-summary">{{writeup.summary|safe }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+
+{% endblock content %}
