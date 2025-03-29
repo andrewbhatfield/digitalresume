@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}writeups
-{% endblock title %}
+{% block title %}writeups{% endblock title %}
 
 {% block content %}
 
@@ -12,14 +11,17 @@
     }
     .writeup {
         width:80%;
-        margin:auto;
-        margin-top:3rem;
+        margin: 2rem auto 3rem;
+    }
+    .writeups {
+        margin-bottom: 8rem;
     }
     .writeup-header{
         text-align: center;
     }
     .writeup-summary{
         margin:5px;
+        text-align:justify;
     }
 </style>
 

@@ -30,6 +30,7 @@
         position: absolute;
         width: 100%;
         left: 0;
+        top:.5rem;
         text-align: center;
         margin: auto;
         font-size:large;
@@ -39,7 +40,7 @@
     .nav-link, .navbar-brand {
       padding: .3rem 1rem;
     }
-    .nav-item, .navbar-brand {
+    .nav-item, .navbar-brand, .navbar-toggler {
       z-index:2;
     }
     .navbar {
@@ -52,17 +53,23 @@
       height:1.8rem;
       width:1.8rem;
     }
+    .navbar-toggler {
+      margin-right:3px;
+    }
     </style>
   </head>
 
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="{% url 'home' %}">andrew hatfield</a>
+      <div class='nav-title'><p class="navbar-text">{% block title %}{% endblock title %}</p></div>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto">
-          <p class="navbar-text">{% block title %}{% endblock title %}</p>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">projects</a>
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">projects</a>
             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
               <a class="dropdown-item" href="{% url 'ecc' %}">cryptography</a>
               <a class="dropdown-item" href="{% url 'minimax' %}">minimax</a>
