@@ -1,17 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Elliptic Curve Cryptography{% endblock title %}
+{% block title %}elliptic curve cryptography{% endblock title %}
 {% block content %}
 <style>
-.nav-controls{
-    width:100%;
-}
-.card{
+
+.card{  
     width:80%;
     margin:auto;
     height:75%;
-    margin-top:50px;
-    background-color:aliceblue;
-    color:var(--bs-body-color);
+    margin-top:3rem;
+    overflow:auto; 
+    --bs-card-border-width: 0px !important;   /* probably shouldn't have called this card if my intention was to hide the border? ¯\_(ツ)_/¯*/
 }
 .next{
     margin-top:18%;
@@ -27,50 +25,40 @@
 .card-title{
     text-align:center;
     font-size:2rem;
+    padding-bottom:1rem;
 }
 .encode_results{
     height:0px; /* for some reason this fixes weird overflow?  */
 }
 .lblock{
-    display:inline;
-    width:60%;
+    flex: 1 1 60%;
     height:100%;
-    overflow:overlay;
-    position:auto;
-    float:left;
     margin-left:17px;
 }
 .card-content{
     height:100%;
+    display:flex;
 }
 .rblock{
-    width:36%;
+    flex: 1 1 36%;
     height:100%;
-    overflow:auto;
-    position:auto;
-    float:right;
     margin-top:0px;
 }
 .graph{
-    
     width:99%;
     height:90%;
     border: 1px solid lightgrey;
     margin:2px;
 }
 .vsep{
-    display:inline-block;
-    width:1px;
-    height:70%;
-    margin-top:60px;
+    flex: 1 1 2%;
+    height:90.4%;
+    margin-left:2%;
     border-left:1px solid lightgrey;
-    margin-left:22px;
 }
 .text{
-    padding:5px;
     padding-top:0px;
     text-align:justify;
-    margin-top:0px;
     margin-right:17px;
 }
 .caption{
@@ -78,27 +66,29 @@
     text-align:center;
 }
 
-.btn-light{
-    background-color: aliceblue;
+.graphFont{
+    color: #dee2e6 !important;
 }
+.nav-controls{
+    width:100%;
+    text-align:center;
+    margin-top:1rem;
+}
+.navControl {
+    margin: 0 2rem;
+    font-size:xxx-large;
+}
+.navControl:not(.disabled):hover{
+    cursor:pointer;
+    
+}
+
 </style>
 <!-- check https://www.ams.org/journals/mcom/1987-48-177/S0025-5718-1987-0866109-5/S0025-5718-1987-0866109-5.pdf for more information
 - -->
 
 
-<div class='rolodex' data-bs-theme="light">
-    <div class='nav-controls'>
-        <div class='next'>
-            <div class='next-button btn btn-light btn-lg'>
-                <span class="material-symbols-outlined">arrow_forward</span>
-            </div>
-        </div>
-        <div class='prev'>
-            <div class='prev-button btn btn-light btn-lg disabled'>
-                <span class="material-symbols-outlined">arrow_back</span>
-            </div>
-        </div>
-    </div>
+<div class='rolodex'>
     <div class='card' id='card1'>
         <div class='card-title'>What is Elliptic Curve Cryptography?</div>
         <div class='card-content'>
@@ -188,7 +178,7 @@
                         </div>
                     </div>
                     <div style='text-align:center;padding-top:15px;'>
-                        <button id='encode_submit' class="btn btn-primary encode_submit">Submit</button>
+                        <button id='encode_submit' class="btn btn-light encode_submit">Submit</button>
                     </div>
                 </form>
                 <div class='encode_results'>
@@ -229,7 +219,7 @@
                         </div>
                     </div>
                     <div style='text-align:center;padding-top:15px;'>
-                        <button id='encode_submit' class="btn btn-primary encode_submit">Generate New Keypairs</button>
+                        <button id='encode_submit' class="btn btn-light encode_submit">Generate New Keypairs</button>
                     </div>
                 </form>
                 <div class='encode_results'>
@@ -402,28 +392,33 @@
             </div>
         </div>
     </div>
+    <div class='nav-controls'>
+        <span class="material-symbols-outlined navControl disabled" id="prevSlide">chevron_left</span>
+        <span class="material-symbols-outlined navControl" id="nextSlide">chevron_right</span>
+    </div>
 </div>
 
 
 <script>
-
-b1 = JXG.JSXGraph.initBoard('jxgbox1', {boundingbox: [-28,28,28,-28], axis:true, showCopyright:false, showNavigation:false});
+JXG.Options.text.cssClass = 'graphFont';
+// jxgbox1_jxgBoard1L3_ticks_15Label1
+b1 = JXG.JSXGraph.initBoard('jxgbox1', {boundingbox: [-28,28,28,-28], axis:true, showCopyright:false, showNavigation:false, defaultAxes: {x: {ticks: {drawLabels:true, strokeColor: '#dee2e6', label: {strokeColor:'#dee2e6'}}}, y: {ticks: {drawLabels:true, strokeColor: '#dee2e6', label: {strokeColor:'#dee2e6'}}}}});
 b1.create('functiongraph', [function(x) {
     return Math.sqrt(x * x * x - x + 1);
-}], {strokeWidth: 3, strokeColor: 'black'});
+}], {strokeWidth: 3, strokeColor: '#dee2e6'});
 b1.create('functiongraph', [function(x) {
     return -Math.sqrt(x * x * x - x + 1);
-}], {strokeWidth: 3, strokeColor: 'black'});
+}], {strokeWidth: 3, strokeColor: '#dee2e6'});
 
-b2 = JXG.JSXGraph.initBoard('jxgbox2', {boundingbox: [-5,15,30,-15], axis:true, showCopyright:false, showNavigation:false});
+b2 = JXG.JSXGraph.initBoard('jxgbox2', {boundingbox: [-5,15,30,-15], axis:true, showCopyright:false, showNavigation:false, defaultAxes: {x: {ticks: {drawLabels:true, strokeColor: '#dee2e6', label: {strokeColor:'#dee2e6'}}}, y: {ticks: {drawLabels:true, strokeColor: '#dee2e6', label: {strokeColor:'#dee2e6'}}}}});
 pts = [[-1, -1], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 1], [2, -6], [2, 6], [3, -5], [3, 5], [5, -11], [5, 11], [9, -5], [9, 5], [10, -11], [10, 11], [11, -4], [11, 4], [12, -8], [12, 8], [14, -11], [14, 11], [17, -5], [17, 5], [20, -8], [20, 8], [22, -10], [22, 10], [23, -9], [23, 9], [25, -12], [25, 12], [26, -8], [26, 8], [27, -13], [27, 13]];
 
 b2.create('functiongraph', [function(x) {
     return Math.sqrt(x * x * x - x + 1);
-}], {strokeWidth: 3, strokeColor: 'black'});
+}], {strokeWidth: 3, strokeColor: '#dee2e6'});
 b2.create('functiongraph', [function(x) {
     return -Math.sqrt(x * x * x - x + 1);
-}], {strokeWidth: 3, strokeColor: 'black'});
+}], {strokeWidth: 3, strokeColor: '#dee2e6'});
 
 i = 1
 for (pt of pts){
@@ -431,13 +426,13 @@ for (pt of pts){
     i+=1
 }
 
-b3 = JXG.JSXGraph.initBoard('jxgbox3', {boundingbox: [-5,15,30,-15], axis:true, showCopyright:false, showNavigation:false});
+b3 = JXG.JSXGraph.initBoard('jxgbox3', {boundingbox: [-5,15,30,-15], axis:true, showCopyright:false, showNavigation:false, defaultAxes: {x: {ticks: {drawLabels:true, strokeColor: '#dee2e6', label: {strokeColor:'#dee2e6'}}}, y: {ticks: {drawLabels:true, strokeColor: '#dee2e6', label: {strokeColor:'#dee2e6'}}}}});
 b3.create('functiongraph', [function(x) {
     return Math.sqrt(x * x * x - x + 1);
-}], {strokeWidth: 3, strokeColor: 'black'});
+}], {strokeWidth: 3, strokeColor: '#dee2e6'});
 b3.create('functiongraph', [function(x) {
     return -Math.sqrt(x * x * x - x + 1);
-}], {strokeWidth: 3, strokeColor: 'black'});
+}], {strokeWidth: 3, strokeColor: '#dee2e6'});
 b3.create('point', [-1.32471795, 0], {name:'P'}).setAttribute({fixed:true});
 b3.create('point', [0, 1], {name:'Q'}).setAttribute({fixed:true});
 b3.create('point', [1.894558, 2.4301597], {name:'-R'}).setAttribute({fixed:true});
@@ -453,26 +448,26 @@ function updateCard(){
     $('.card').hide();
     $(`#card${cur_card}`).show();
     if (cur_card > 1){
-        $('.prev-button').removeClass('disabled');
+        $('#prevSlide').removeClass('disabled');
     }
     if (cur_card < 2){
-        $('.prev-button').addClass('disabled');
+        $('#prevSlide').addClass('disabled');
     }
     if (cur_card < max_cards){
-        $('.next-button').removeClass('disabled');
+        $('#nextSlide').removeClass('disabled');
     }
     if (cur_card == max_cards){
-        $('.next-button').addClass('disabled');
+        $('#nextSlide').addClass('disabled');
     }
 }
 
-$('.next-button').click(function(){
+$('#nextSlide').click(function(){
     if (!$(this).hasClass('disabled')){
         cur_card += 1;
         updateCard();
     }
 });
-$('.prev-button').click(function(){
+$('#prevSlide').click(function(){
     if (!$(this).hasClass('disabled')){
         cur_card -= 1;
         updateCard();

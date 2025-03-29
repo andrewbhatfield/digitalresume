@@ -39,7 +39,7 @@ def ContactCheck(request):
 
 def WriteupView(request):
     return render(request, 'applets/writeups.html', {
-        'writeups': Writeup.objects.all()
+        'writeups': Writeup.objects.all().order_by('order')
     })
 
 # def DFTView(request):

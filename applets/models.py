@@ -7,6 +7,7 @@ class Writeup(models.Model):
     name = models.CharField(max_length=500)
     link = models.URLField()
     summary = models.TextField()
+    order = models.IntegerField()
 
     def __str__(self):
         return self.name
