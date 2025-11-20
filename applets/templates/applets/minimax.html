@@ -76,7 +76,6 @@ $('.tttsquare').click(function(){
                 url: "{% url 'minimax_calculate' %}",
                 data: {'board': boardState, 'csrfmiddlewaretoken': csrf},
                 success: function(data){
-                    console.log(data);
                     if (data['result'] !== 'Game is in progress.'){
                         if (data['result'] === 'Bot has won.'){
                             current = 'botwin';
@@ -108,3 +107,12 @@ $('.newgame').click(function(){
 
 </script>
 {% endblock content %}
+
+{% block info %}
+<p>more specifically than minimax, this is an implmentation of minimax with alpha-beta pruning, meaning we can truncate recursive minimax calls 
+  early if we know that the game path is better for the opponent (or worse for us) than a previously found move. this would be much cooler if the game 
+  was more complex than just 3x3 tic-tac-toe - with so few moves, any interesting adjustments that i could make (for example, searching only to specific 
+  depths and using some heuristic to score the resulting positions) end up being not very useful.</p>
+<p>
+</p>
+{% endblock info %}

@@ -123,7 +123,7 @@
             </div>
             <div class='vsep'></div>
             <div class='rblock'>
-                <div class='text'>Let $p > 3$ be a prime and let $\mathbb{F}_p = \mathbb{Z}/\mathbb{Z}p$ be the integers modulo $p$, i.e. the set of equivalence classes obtained by sorting 
+                <div class='text'>Let $p > 3$ be a prime and let $\mathbb{F}_p = \mathbb{Z}/\mathbb{Z}_p$ be the integers modulo $p$, i.e. the set of equivalence classes obtained by sorting 
                 each integer based on its remainder when divided by $p$. It turns out that this set of classes is incredibly well-behaved - we can add, 
                 subtract, multiply, and (for nonzero classes) divide equivalence classes of integers modulo $p$, just like we would with the real numbers. We call 
                 this set the <b>finite (or Galois) field of order $p$</b>. 
@@ -541,3 +541,21 @@ $(document).ready(function () {
 
 
 {% endblock content %}
+
+{% block info %}
+<p>at the core of this demo are some important libraries - while I typically try to do these projects (at least close to) libraryless,
+ i wasn't super interested in writing (e.g.) highly optimized powmod/modular inverse algorithms. for these, we use gmpy2, a crazy-fast
+c-coded python module, for charting we use jsxgraph, and for TeX math rendering we use mathjax. however, all of the algorithms in use were written by me, 
+albeit often adapted from available pseudocode - check the github page <a href="https://github.com/andrewbhatfield/digitalresume/blob/main/applets/ecc.py">applets/ecc.py</a></p>
+
+<p>while developing this demo, i had originally wanted to dynamically generate a large prime and solve for the cardinality using my 
+    implementation of the <a href="https://en.wikipedia.org/wiki/Counting_points_on_elliptic_curves#Baby-step_giant-step">baby-step giant-step</a> algorithm, but the time it 
+    takes to compute the cardinality varies widely even for primes of roughly the same size (partially due to the fact 
+    that this server runs on only 512mb of ram) - instead, i picked a random 9-digit prime and precomputed the cardinality. the method of breaking up the message into one point 
+    per ascii character is not by any means rigorous/secure, but it is an incredibly simple and illustrative embedding.</p>
+
+<p>all interactive portions of this demo point to the same endpoint {% url 'ecc_encode' %} to ensure that the user-submitted input message and the randomized keypairs remain 
+    in sync between the client and the server - the endpoint is called once on page load to prepopulate the relevant fields across all of the slides, and then again 
+    each time the user submits a new message or generates new keypairs. 
+</p>
+{% endblock info %}

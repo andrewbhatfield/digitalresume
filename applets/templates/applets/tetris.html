@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% block title %}tetris ai{% endblock title %}
+{% load tetris_tags %}
+{% block content %}
+<style>
+    #intro {
+        margin-top:3rem;
+        margin-bottom:3rem;
+    }
+    #mainFlex{
+        display:flex;
+        width:80%;
+        margin:auto;
+    }
+    #leftPanel, #rightPanel {
+        flex: 1; 
+        text-align: right;
+    }
+    #leftPanel {
+        display:flex;
+        flex-direction: column;
+        margin-right:2rem;
+    }
+    #rightPanel {
+        margin-left:2rem;
+    }
+    #holdPanel{
+        margin-top:5rem;
+        width:5rem;
+        float:right;
+        margin-left:auto;
+    }
+    #statsPanel{
+        margin-top:auto;
+    }
+    #tetrisPanel {
+        width: 20rem;  
+        height: 46rem; 
+        margin: 0 auto;
+        align-self: center;
+    }
+    #tetrisBoard{
+        margin:auto;
+        width: 100%;
+        height: 100%;
+    }
+    .tetrisGrid {
+        border: 1px solid white;
+    }
+    
+    #queuePanel{
+        float:left;
+        margin-right:auto;
+        display:flex;
+        flex-direction: column;
+        margin-top:5rem;
+        width:5rem;
+    }
+
+    .pieceDisplay{
+        text-align:center;
+        margin:auto;
+        margin-bottom:1rem;
+    }
+
+    .queueJ, .queueL, .queueT, .queueS, .queueZ{
+        width: 3rem;
+        height: 2rem;
+    }
+
+    .queueO {
+        width:2rem;
+        height:2rem;
+    }
+
+    .queueI{
+        width:4rem;
+        height:1rem;
+    }
+
+    .jPieceColor, .lPieceColor, .sPieceColor, .zPieceColor, .tPieceColor, .iPieceColor, .oPieceColor {
+        border: 1px solid black;
+    }
+
+    .jPieceColor {
+        background-color: blue;
+    }
+
+    .lPieceColor {
+        background-color: orange;
+    }
+
+    .sPieceColor {
+        background-color: rgb(75, 218, 75);
+    }
+
+    .zPieceColor {
+        background-color:red;
+    }
+
+    .tPieceColor {
+        background-color:purple;
+    }
+
+    .oPieceColor {
+        background-color: yellow;
+    }
+
+    .iPieceColor {
+        background-color: aqua;
+    }
+
+</style>
+
+
+
+<div id="intro">
+    <div style="text-align: center;">
+        <p>lorem ipsum
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <div id="mainFlex">
+        <div id="leftPanel">
+            <div id="holdPanel">
+                <h6 style="text-align:center;">Hold</h6>
+                <p>&nbsp;</p>
+            </div>
+            <div id="b2bPanel">
+            </div>
+            <div id="statsPanel">
+                <div id="ppmStats">
+                    <h6>Pieces</h6>
+                </div>
+                <div id="attackStats">
+                    <h6>Attack</h6>
+                </div>
+            </div>
+        </div>
+        <div id="tetrisPanel" style="text-align: center;">
+            <table id="tetrisBoard">
+                {% for row in rows %}
+                {% with forloop.counter as rowNumber %}
+                    <tr class="tetrisRow">
+                        {% for col in cols %}
+                            <td class="tetrisCell{% if rowNumber > 3 %} tetrisGrid{% endif %}" data-sqid="{{forloop.counter|cellId:rowNumber}}"></td>
+                        {% endfor %}
+                    </tr>
+                {% endwith %}
+                {% endfor %}
+            </table>
+        </div>
+        <div id="rightPanel">
+            <div id="queuePanel">
+                <h6 style="text-align:center;">Queue</h6>
+                <div id="queue1" class="pieceDisplay" data-piece="{{startingState.queue.1}}"></div>
+                <div id="queue2" class="pieceDisplay" data-piece="{{startingState.queue.2}}"></div>
+                <div id="queue3" class="pieceDisplay" data-piece="{{startingState.queue.3}}"></div>
+                <div id="queue4" class="pieceDisplay" data-piece="{{startingState.queue.4}}"></div>
+                <div id="queue5" class="pieceDisplay" data-piece="{{startingState.queue.5}}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    /* eslint-disable */
+    queue = [{% for state in startingState.queue %}"{{state}}",{% endfor %}];
+    current = queue.pop();
+
+    // different pieces start at different spots - (rows from top, cols from left)
+    startingPieceOffsets = {'J': [0,4], 'L': [0,4], 'S': [0,4], 'Z': [0,4], 'T': [0,4], 'O': [0,5], 'I': [1,4]};
+
+    // startingCursorOffset - location of the cursor from top left of screen (right, down)
+    // pieceOffsets - relative coordinates indicating cells of the piece, listed in order of rotations 0, R, 2, L
+    //
+    pieceData = {
+        'T': {'startingCursorOffset': [4, 1], 'pieceOffsets': [[[-1, 0], [0,0], [0, 1], [1,0]], [[0,1], [0,0], [1, 0], [0, -1]], [[-1, 0], [0,0], [0, -1], [1,0]], [[0,1], [0,0], [-1, 0], [0, -1]]]},
+        
+    }
+    rotationState = 0;
+
+    // ((x % n) + n) % n)
+
+    cursorLocation = pieceData[current]['startingCursorOffset'];
+
+    // TODO make collision checks - can be used for all move, rotate, and place?
+
+
+    function addAndIndex (a, b) {
+        // adds two coords and converts result to absolute indices for plotting
+        if (a[0] + b[0] < 0 || a[1] - b[1] < 0){
+            throw new Error("oob");
+        } else {
+            return 10 * (a[1] - b[1]) + (a[0] + b[0]);
+        }
+    }
+
+
+    function updateCurrent () {
+        $('#tetrisBoard td').removeClass(["jPieceColor", "lPieceColor", "sPieceColor", "zPieceColor", "tPieceColor", "iPieceColor", "oPieceColor"]);
+
+        getIndices().forEach(index => {
+            $(`#tetrisBoard td[data-sqid=${index}]`).addClass(`${current.toLowerCase()}PieceColor`); // lol this is case sensitive even though the actual css rule isnt?
+        });
+
+    }
+
+    function getIndices () {
+        indices = []; 
+        pieceData[current]['pieceOffsets'][rotationState].forEach(offset => {
+            indices.append(addAndIndex(cursorLocation, offset));
+        });
+        return indices;
+    }
+
+    function move(direction) {
+        if (direction === 'l'){
+        }
+    }
+
+
+    function rotate(direction) { // 
+        current 
+        if (direction === 'r') {
+            rotationState += 1;
+        } else {
+            rotationState -= 1;
+        }
+        rotationState = ((rotationState % 4) + 4) % 4; // again, for some reason % can give negative remainder in js?
+        updateCurrent();
+    }
+
+    function place() {
+
+    }
+
+
+
+    $(document).ready(function (){
+        updateQueueIcons();
+        updateCurrent();
+    });
+
+    jHtml = "<table class='queueJ'><tr><td class='jpiececolor'></td><td></td><td></td></tr><tr><td class='jpiececolor'></td><td class='jpiececolor'></td><td class='jpiececolor'></td></tr></table>";
+    lHtml = "<table class='queueL'><tr><td></td><td></td><td class='lpiececolor'></td></tr><tr><td class='lpiececolor'></td><td class='lpiececolor'></td><td class='lpiececolor'></td></tr></table>";
+    sHtml = "<table class='queueS'><tr><td></td><td class='spiececolor'></td><td class='spiececolor'></td></tr><tr><td class='spiececolor'></td><td class='spiececolor'></td><td></td></tr></table>";
+    zHtml = "<table class='queueZ'><tr><td class='zpiececolor'></td><td class='zpiececolor'></td><td></td></tr><tr><td></td><td class='zpiececolor'></td><td class='zpiececolor'></td></tr></table>";
+    tHtml = "<table class='queueT'><tr><td></td><td class='tpiececolor'></td><td></td></tr><tr><td class='tpiececolor'></td><td class='tpiececolor'></td><td class='tpiececolor'></td></tr></table>";
+    oHtml = "<table class='queueO'><tr><td class='opiececolor'></td><td class='opiececolor'></td></tr><tr><td class='opiececolor'></td><td class='opiececolor'></td></tr></table>";
+    iHtml = "<table class='queueI'><tr><td class='ipiececolor'></td><td class='ipiececolor'></td><td class='ipiececolor'></td><td class='ipiececolor'></td></tr></table>";
+
+
+    function updateQueueIcons(){
+        $('.pieceDisplay').each(function(){
+            pieceType = $(this).attr('data-piece');
+            switch (pieceType){
+                case "J":
+                    $(this).html(jHtml);
+                    break;
+                case "L":   
+                    $(this).html(lHtml);
+                    break;
+                case "S":   
+                    $(this).html(sHtml);
+                    break;
+                case "Z":   
+                    $(this).html(zHtml);
+                    break;
+                case "T":   
+                    $(this).html(tHtml);
+                    break;
+                case "O":   
+                    $(this).html(oHtml);
+                    break;
+                case "I":   
+                    $(this).html(iHtml);
+                    break;
+            }
+        });
+    }
+</script>
+
+{% endblock content %}

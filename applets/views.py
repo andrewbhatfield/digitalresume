@@ -11,10 +11,11 @@ from digitalresume.settings import EMAIL, PHONE
 from .ecc import ECC, ascii_encode
 from .mazes import Maze, Solver
 from .minimax import Board
+from .mnist import TrainedModel
 from .models import Writeup
+from .tetris import Tetris
 
-
-
+mnist_model = TrainedModel()
 
 # Create your views here.
 
@@ -80,13 +81,12 @@ def ECCView(request):
     })
 
 def ECCEncode(request):
-    ecc = ECC(408616349, -1, 1, N=408594286, kf=1000, bound=3) # precomputed since sometimes takes a while?
+    ecc = ECC(408616349, -1, 1, N=408594286, kf=1000, bound=3) # precomputed since sometimes takes a while
 
-    if request.method == 'POST':
-        msg = request.POST['msg']
-        s = ascii_encode(msg)
-        blocks = ecc.ascii_blocks(s)
-        encoded = ecc.encode(msg)
+    msg = request.POST['msg']
+    s = ascii_encode(msg)
+    blocks = ecc.ascii_blocks(s)
+    encoded = ecc.encode(msg)
 
     cpub, cpri = ecc.generate_key_pair() # sender public + private key
     dpub, dpri = ecc.generate_key_pair() # receiver public + private key
@@ -96,8 +96,6 @@ def ECCEncode(request):
     step3_points = ecc.encrypt(step2_points, cpri) #c'dcP_m = dP_m
     step4_points = ecc.encrypt(step3_points, dpri) #d'dP_m = P_m
     decoded = ecc.decode(step4_points)
-
-
 
     return JsonResponse({
         's': s,
@@ -136,6 +134,32 @@ def MazeSolve(request):
         frames = s.generateFrames(method=params['method'])
         return JsonResponse({'frames': frames})
     except Exception as e:
-        print(e)
         return HttpResponse(status=500)
 
+
+def MNISTView(request):
+    return render(request, 'applets/mnist.html', {
+    })
+
+
+def MNISTRandomImage(request): # pulls random image from testing data
+    return JsonResponse({'image': mnist_model.randomImage()})
+
+
+def MNISTPredict(request): # predicts digit in submitted image
+    try:
+        params = loads(request.body)
+        image =  np.reshape(params['image'], (784, 1))
+        prediction = mnist_model.predict(image)
+        return JsonResponse({'prediction': prediction})
+    except Exception as e:
+        return HttpResponse(status=500)
+
+
+def TetrisView(request):
+    startingState = Tetris()
+    return render(request, 'applets/tetris.html', {
+        'rows': range(23),
+        'cols': range(10),
+        'startingState': startingState,
+    })

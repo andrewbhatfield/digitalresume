@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% block title %}mnist{% endblock title %}
+{% block content %}
+<style>
+    #intro {
+        margin-top:3rem;
+        margin-bottom:3rem;
+    }
+    #mainFlex{
+        display:flex;
+        width:80%;
+        margin:auto;
+        align-items:center;
+
+    }
+    #mnistPanel {
+        width: 20rem;  
+        height: 20rem; 
+        margin: 0 auto;
+        align-self: center;
+    }
+    #mnistTable{
+        margin:auto;
+        width: 100%;
+        height: 100%;
+    }
+    #mnistCanvas{
+        margin:auto;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+    }
+    #controlPanel, #predictionPanel {
+        flex: 1; 
+    }
+    #controlPanel {
+        display:block;
+        width:25rem;
+    }
+    #controlAlign {
+        margin-left:auto;
+    }
+    .mazeControl {
+        padding: .5rem;
+        
+    }
+    #controlButtons{
+        padding:.5rem;
+        padding-top: 0;
+    }
+    .mnistControl:hover, .solverControl:hover {
+        cursor:pointer;
+    }
+
+</style>
+
+
+
+<div id="intro">
+    <div style="text-align: center;">
+        <p>implementation of an mnist neural net classifier
+        <br>performance is best when digits are roughly centered
+        <br>
+        </p>
+    </div>
+</div>
+
+<div style="text-align: center;">
+    <div id="mainFlex">
+        <div id="controlPanel">
+            <div id="controlAlign">
+                <div id="controlButtons">
+                    <span class="material-symbols-outlined mnistControl" onclick="swapDisplay('canvas');">draw</span>
+                </div>
+                <div style="padding-top:3rem;">
+                    <p>click the draw button above to draw your own digits<br><br></p>
+                </div>
+            </div>
+        </div>
+        <div id="mnistPanel" style="text-align: center;">
+            <table id="mnistTable"></table>
+            <canvas id="mnistCanvas"></canvas>
+            <a class="btn btn-light" id='randomImage' onclick='randomImage();' style="margin-top:1rem;">get a new testing image</a>
+        </div>
+        <div id="predictionPanel">
+            <h5 id="predictionTitle">predicted digit: </h5>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    csrf = '';
+    maze = [];
+    painting = false;
+    endDrawingIterations = 6; // try every 100ms until endDrawingIterations is done, used to time rasterization of drawing
+
+    function randomImage() {
+        $.ajax({
+            type: "GET",
+            url: "{% url 'mnist_random' %}",
+            data: {'csrfmiddlewaretoken': csrf},
+            success: function (data){
+                image = data['image'];
+                maze = image;
+                genHtml = '';
+                image.forEach(row => {
+                    genHtml += '<tr>'
+                    row.forEach(cell => {
+                        genHtml += `<td class="mnistCell" data-gray="${(cell)}"></td>`;
+                    });
+                    genHtml += '</tr>';
+                });
+                $('#mnistTable').html('');
+                $('#mnistTable').append(genHtml);
+                swapDisplay('table');
+                colorImage();
+                getPrediction(image);
+            }
+        });
+    }
+
+    function colorImage() {
+        $(".mnistCell").each(function (){
+            gray = $(this).attr('data-gray');
+            $(this).css('background-color', `rgb(${gray}, ${gray}, ${gray})`)
+        });
+    }
+
+    function getPrediction (grid) {
+        $.ajax({
+            type: "POST",
+            contentType: 'application/json',
+            url: "{% url 'mnist_predict' %}",
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrf,
+            },
+            data: JSON.stringify({'image': grid}),
+            success: function (data){
+                $('#predictionTitle').text(`predicted digit: ${data['prediction']}`);
+            }
+        });
+    }
+
+    async function endDrawing() {
+        await wait(100);
+        
+        if (painting) {
+            endDrawingIterations = 6;
+        } else {
+            endDrawingIterations--;
+            if (endDrawingIterations <= 0){
+                convert();
+                endDrawingIterations = 6;
+            } else {
+                endDrawing();
+            }
+        }
+    }
+
+    const wait = (ms) => 
+        new Promise(resolve => 
+            setTimeout(() => resolve(true), ms)
+        );
+
+    function convert() {
+        canvas = document.getElementById("mnistCanvas");
+        ctx = canvas.getContext("2d");
+        gridSize = 28;
+        imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        data = imgData.data;
+        grid = [];
+        genHtml = '';
+
+        for (y = 0; y < gridSize; y++) { // calculate fill percentages for each corresponding pixel in grid to assign brightness
+            row = [];
+            genHtml += '<tr>'
+            for (x = 0; x < gridSize; x++) {
+                xstart = Math.floor(x * canvas.width / gridSize);
+                ystart = Math.floor(y * canvas.height / gridSize);
+                xend = Math.floor((x + 1) * canvas.width / gridSize);
+                yend = Math.floor((y + 1) * canvas.height / gridSize);
+            
+                filled = 0;
+                total = 0;
+
+                for (py = ystart; py < yend; py++) {
+                    for (px = xstart; px < xend; px++) {
+                        idx = (py * canvas.width + px) * 4; 
+                        r = data[idx];
+                        g = data[idx + 1];
+                        b = data[idx + 2];
+
+                        if (r === 255 && g === 255 && b === 255) {
+                            filled++;
+                        }
+
+                        total++;
+                    }
+                }
+
+                fill = Math.min((filled / total) * 120, 100); // scale up brightness a bit
+                bright = Math.round((fill / 100) * 255);
+
+                row.push(bright);
+                genHtml += `<td class="mnistCell" data-gray="${bright}"></td>`;
+            }
+            grid.push(row);
+            genHtml += '</tr>';
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        swapDisplay('table');
+        $('#mnistTable').html(genHtml);
+        colorImage();
+        getPrediction(grid);
+    }
+
+
+    function swapDisplay(option){
+        canvas = $('#mnistCanvas');
+        table = $('#mnistTable');
+        if (option === 'canvas') {
+            canvas.show();
+            table.hide();
+        } else {
+            table.show();
+            canvas.hide();
+        }
+    }
+
+    $(document).ready(function() {
+        csrf = $('{% csrf_token %}').val();
+        $('#mnistCanvas').hide();
+        randomImage();
+        
+        canvas = document.getElementById("mnistCanvas");
+        ctx = canvas.getContext("2d");
+        rescale = 27; // trial and error to make path sync up with cursor - canvas thinks its twice as tall as it is, maybe due to being stacked under grid and then hidden
+
+        function start(e) {
+            painting = true;
+            draw(e);
+        }
+
+        function end(e) {
+            painting = false;
+            ctx.beginPath();
+            endDrawing();
+        }
+
+        function draw(e) {
+            if (!painting) return;
+
+            x = e.offsetX * rescale/(rescale+1);
+            y = e.offsetY * rescale/(2*rescale+1);
+            ctx.lineWidth = 15; 
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'white';
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener("mousedown", start);
+        canvas.addEventListener("mouseup", end);
+        canvas.addEventListener("mousemove", draw);
+    });
+
+
+</script>
+
+{% endblock content %}
+
+
+{% block info %}
+<p> this is a very simple 2-hidden layer neural network i built and (probably over-)trained with numpy and elbow grease based on the standard mnist handwritten digit dataset 
+    (previously available <a href="http://yann.lecun.com/exdb/mnist/">here</a>, but seems to now be missing). after a few hundred training iterations, the model performed at 
+    roughly 90% on both training and testing datasets (the 'get a new testing image' pulls from the latter).</p>
+
+<p> to be honest, it performs a good bit worse than i expected - it seems to really struggle with classifying drawn input even though it performs quite well on the testing dataset. i suspect 
+    that a large part of that is narrowing down the appropriate stroke width and way i rasterize the image. currently, i take the proportion of filled 
+    pixels on the drawing and use that to calculate the brightness of the corresponding grid cell which works much better, and adjustments to how the brightness
+    is scaled have seemed to increase performance a bit, but it still struggles (especially with 4s vs 9s, 2s vs 7s). i expect that trying to roughly center the 
+    drawings would have a huge boost. 
+</p>
+
+{% endblock info %}

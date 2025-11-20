@@ -91,7 +91,7 @@ class ECC():
 
 
     def pt_add(self, P, Q):
-        '''implementation of the elliptic curve group law\\
+        '''implementation of the elliptic curve group law,
             returns the sum P + Q'''
         a = self.a
         p = self.p
@@ -134,7 +134,6 @@ class ECC():
         while True:
             steps += 1
             P = self.randpoint()
-            print('starting calculation with point', P)
             Pl = [(0,0),]
             for j in range(1,m+1):
                 Pl.append(self.pt_add(Pl[j-1], P))
@@ -233,7 +232,7 @@ class ECC():
 
     def generate_key_pair(self): # TODO do i need to allow custom keys in class dec?
         N = self.N
-        pu = randint(N//20, N)
+        pu = randint(N//20, N) # just generate random values until you find a public key that is coprime
         while gcd(pu,N) != 1:
             pu = randint(N//20, N)
         pr = int(invert(mpz(pu), mpz(N)))

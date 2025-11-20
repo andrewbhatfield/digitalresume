@@ -1,8 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}my digital resume
-{% endblock title %}
-
+{% block title %}my digital resume{% endblock title %}
+{% block noinfomodal %}{% endblock noinfomodal %}
 {% block content %}
 
 <style>
@@ -29,12 +28,12 @@
 
 
 <div class = 'maincontainer'> 
-    <div class="big" id="text">
-        a quick (WIP) website to show off some of my interests
-        <br><br>fun projects are under the 'projects' header
-        <br><br>more academic stuff is under 'writeups'
-        <br><br>formal resume, cv, and other info available under 'contact'
-        <br><br>built using django - click the github icon for source code
+    <div id="text">
+        <p>a quick (WIP) website to show off some of my interests</p>
+        <br><br><p>fun projects are under the 'projects' header - click <span style="vertical-align: bottom;" class="material-symbols-outlined">info</span> for technical details</p>
+        <br><br><p>more academic stuff is under 'writeups'</p>
+        <br><br><p>formal resume, cv, and other info available under 'contact'</p>
+        <br><br><p>built using django - click the github icon for source code</p>
     </div>
     <div id='selfie'>
         <img style='border-radius:50%;' src="{% static 'me.jpg' %}" alt="me (10 year old picture)">

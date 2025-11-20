@@ -10,7 +10,7 @@
         display:flex;
         width:80%;
         margin:auto;
-        justify-content:center;
+        align-items:center;
 
     }
     #mazePanel {
@@ -261,3 +261,26 @@
 </script>
 
 {% endblock content %}
+
+{% block info %}
+<p>mazes are generated using <a href="https://en.wikipedia.org/wiki/Maze_generation_algorithm#Iterative_randomized_Prim's_algorithm_(without_stack,_without_sets)">
+    prim's algorithm</a>, but only because it was convenient/easy to implement - the resulting mazes are maybe a bit too simple. at a high level, we 
+    recursively pick pairs containing of a passage and its neighbors, and if the neighbor is a wall, we turn it and the cell in between into a passage. either way, we 
+    add this new neighbor to the recursive 'stack'.
+</p>
+
+<p>
+    the solvers are all generators yielding the current cell and the path the solver has taken to get there, 
+    rather than just completing and returning a list of cells corresponding to the solved path. this allows me to generate 'frames' of what the solver 
+    has visited throughout each iteration and the current longest path its found.
+</p>
+
+<p>
+    the animation is done in a really silly way, using async js to update CSS rules to color cells. i had previously planned to 
+    use something like matplotlib's animation library to generate + store the animations and then serve them to the user, but it was incredibly slow and the files were huge - 
+    i had an idea to just try to do it all in js/css and was impressed by how much faster it was. each frame is just a list of cells with some magic numbers
+    indicating how they should be colored, which means it is pretty lightweight (at least in comparison) to send them to the web client. a huge improvement 
+    in the amount of transferred data could be made by just using an index for each cell rather than its coordinates and also only sending the differences between each frame, 
+    but this shifts some of the work to the browser (which would probably be better).
+</p>
+{% endblock info %}

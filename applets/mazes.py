@@ -30,7 +30,7 @@ class Maze():
         while pairs:
             pair = choice(pairs)
             pairs.remove(pair)
-
+    
             c1 = pair[0]
             c2 = pair[1]
 
@@ -42,12 +42,9 @@ class Maze():
                 maze[between] = 1
                 maze[c2] = 1
 
-
             for neighbor in self.getNeighbors(c2):
                 if maze[neighbor] == 0:
                     pairs.append((c2, neighbor))
-
-        
 
         return maze
 
